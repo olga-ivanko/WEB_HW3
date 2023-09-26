@@ -89,16 +89,20 @@ def main() -> str:
     try:
         path = Path(sys.argv[1])
     except IndexError:
-        return "No path to folder"
+        print("No path to folder")
+        return None
     
     if not path.exists():
-        return "Folder dos not exists"
+        print("Folder dos not exists")
+        return None
     
     sort_folder(path)
     archive_unpack(path)
     del_empty_folders(path)
     record_result(path)   
-    return "All Ok"
+    print("All Ok")
+    return None
+    
 
 
 if __name__ == '__main__':
