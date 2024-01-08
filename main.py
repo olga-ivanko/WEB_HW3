@@ -2,6 +2,7 @@ import sys
 import re
 import shutil
 from pathlib import Path
+import concurrent.futures
 
 
 SUBFOLDER_NAME_TO_EXTENSIONS = {
@@ -43,18 +44,27 @@ def move_file(file:Path, category:str, root_dir:Path) -> None:
     new_name = Path(normalize(file.stem) + file.suffix)
     new_path = target_dir.joinpath(new_name.name)
     print(category, new_path)
+
     if not target_dir.exists():
-        target_dir.mkdir()   
-    if not new_path.exists():
-        file.replace(new_path)
+        target_dir.mkdir()
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        if not new_path.exists():
+            executor.submit(file.replace, new_path)
     return None
 
 
+def process_file(file: Path, root_dir) -> None: 
+    category = get_categories(file)
+    move_file(file, category, root_dir)
+    return None 
+
+
 def sort_folder(path:Path) -> None:
-    for element in path.glob("**/*"):
-        if element.is_file():
-            category = get_categories(element)
-            move_file(element, category, path)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        for element in path.glob("**/*"):
+            if element.is_file():
+                executor.submit(process_file, element, path)
     return None
 
 def archive_unpack(sort_folder:Path) -> None:
@@ -101,7 +111,7 @@ def main() -> str:
     del_empty_folders(path)
     record_result(path)   
     print("All Ok")
-    return None
+    
     
 
 
